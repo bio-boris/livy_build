@@ -9,7 +9,8 @@ ENV LIVY_HOME /opt/livy
 RUN apt-get update -y && apt-get install -y wget zip curl git maven
 
 WORKDIR /tmp/
-RUN git clone https://github.com/apache/incubator-livy.git
+# RUN git clone https://github.com/apache/incubator-livy.git
+RUN git clone https://github.com/bio-boris/incubator-livy.git
 RUN cd incubator-livy && mvn package -DskipTests
 
 # Set the correct permissions for the livy directory
