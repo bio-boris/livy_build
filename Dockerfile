@@ -1,23 +1,22 @@
 FROM bitnami/spark:3.5.1
 
 USER root
-# Set environment variables for Livy version
-ENV LIVY_VERSION 0.8.0
-ENV LIVY_HOME /opt/livy
+
+ENV LIVY_HOME=/opt/livy
 
 # Update package list and install necessary packages
 RUN apt-get update -y && apt-get install -y wget zip curl git maven
 
-WORKDIR /tmp/
-# RUN git clone https://github.com/apache/incubator-livy.git
+# Clone Livy repository and build it
+WORKDIR /tmp
 RUN git clone https://github.com/bio-boris/incubator-livy.git
 RUN cd incubator-livy && mvn package -DskipTests
 
-# Set the correct permissions for the livy directory
-RUN chown -R 1001:1001 /opt/livy
+# Move Livy to the designated directory and set permissions
+RUN mkdir /opt/livy && mv /tmp/incubator-livy/* /opt/livy/ && chown -R 1001:1001 /opt/livy
 
 # Generate a comma-separated list of the REPL jars
-RUN ls /opt/livy/repl_2.11-jars/*.jar | tr '\n' ',' | sed 's/,$//' > /opt/livy/repl_jars.txt
+RUN find /opt/livy/repl/scala-2.11/target/jars /opt/livy/repl/target/jars -name '*.jar' | tr '\n' ',' | sed 's/,$//' > /opt/livy/repl_jars.txt
 
 # Set Livy configurations
 RUN printf "livy.server.host = 0.0.0.0\n" > /opt/livy/conf/livy.conf \
@@ -35,10 +34,10 @@ log4j.appender.stdout.layout.ConversionPattern=%%d{ISO8601} [%%t] %%-5p %%c{2} -
 RUN mkdir -p /opt/livy/logs && chown -R 1001:1001 /opt/livy/logs
 
 # Set environment variables
-ENV SPARK_HOME /opt/bitnami/spark
-ENV HADOOP_CONF_DIR /etc/hadoop/conf
-ENV LIVY_CONF_DIR /opt/livy/conf
-ENV LIVY_LOG_DIR /opt/livy/logs
+ENV SPARK_HOME=/opt/bitnami/spark
+ENV HADOOP_CONF_DIR=/etc/hadoop/conf
+ENV LIVY_CONF_DIR=/opt/livy/conf
+ENV LIVY_LOG_DIR=/opt/livy/logs
 
 # Expose Livy port
 EXPOSE 8998
